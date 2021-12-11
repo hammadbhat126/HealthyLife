@@ -1,65 +1,241 @@
 package com.kashsoft.healthylife;
 
+import android.annotation.SuppressLint;
+import android.app.Dialog;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Build.VERSION;
 import android.os.Bundle;
+import android.os.StrictMode;
+import android.os.StrictMode.ThreadPolicy.Builder;
+import android.view.MenuItem;
 import android.view.View;
-import android.view.Menu;
+import android.view.Window;
+import android.widget.Button;
+import android.widget.ImageView;
 
-import com.google.android.material.snackbar.Snackbar;
-import com.google.android.material.navigation.NavigationView;
-
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
-import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
-import com.kashsoft.healthylife.databinding.ActivityMainBinding;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.navigation.NavigationView.OnNavigationItemSelectedListener;
+import com.kashsoft.healthylife.WalkandStep.utils.StepDetectionServiceHelper;
+import com.kashsoft.healthylife.fragment.Fragment_Calculate;
+import com.kashsoft.healthylife.fragment.Fragment_Reminder;
+import com.kashsoft.healthylife.fragment.Fragment_Walk_and_Step;
+import com.kashsoft.healthylife.fragment.Fragment_Workout;
+import com.kashsoft.healthylife.fragment.MainFragment;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OnNavigationItemSelectedListener {
+    BottomNavigationView bottomNavigation;
 
-    private AppBarConfiguration mAppBarConfiguration;
-    private ActivityMainBinding binding;
+    DrawerLayout drawer;
+    ImageView imageView1;
+    BottomNavigationView.OnNavigationItemSelectedListener navigationItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
+        public boolean onNavigationItemSelected(MenuItem menuItem) {
+            String str = "";
+            switch (menuItem.getItemId()) {
+                case R.id.navigation_home:
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
 
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+                    toolbar.setTitle(getString(R.string.app_name));
+                    MainActivity.this.openFragment(MainFragment.newInstance(str, str,MainActivity.this));
+                    return true;
 
-        setSupportActionBar(binding.appBarMain.toolbar);
-        binding.appBarMain.fab.setOnClickListener(new View.OnClickListener() {
-            @Override
+                case R.id.navigation_map:
+                    toolbar.setTitle("Workouts");
+                    MainActivity.this.openFragment(Fragment_Workout.newInstance(str, str));
+                    return true;
+
+                case R.id.navigation_world:
+                    toolbar.setTitle("Calculater");
+                    MainActivity.this.openFragment(Fragment_Calculate.newInstance(str, str));
+                    return true;
+
+                case R.id.navigation_walk:
+                    toolbar.setTitle("Walk & Step");
+                    MainActivity.this.openFragment(Fragment_Walk_and_Step.newInstance(str, str));
+                    return true;
+
+                case R.id.navigation_news:
+                    toolbar.setTitle("Reminders");
+                    MainActivity.this.openFragment(Fragment_Reminder.newInstance(str, str));
+                    return true;
+
+                default:
+
+                    return false;
+            }
+        }
+    };
+
+    NavigationView navigationView;
+    Toolbar toolbar;
+
+
+    @SuppressLint("ResourceType")
+    public void onCreate(Bundle bundle) {
+        super.onCreate(bundle);
+        if (VERSION.SDK_INT > 21) {
+            StrictMode.setThreadPolicy(new Builder().permitAll().build());
+        }
+        setContentView((int) R.layout.activity_main);
+
+//        StepDetectionServiceHelper.startAllIfEnabled(true, MainActivity.this);
+
+        this.navigationView = (NavigationView) findViewById(R.id.nav_views);
+//        bottomNavigation.setItemIconTintList(null);
+        this.imageView1 = (ImageView) findViewById(R.id.setting);
+        this.imageView1.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+//                MainActivity.this.startActivity(new Intent(MainActivity.this, Setting_Activity.class));
             }
         });
-        DrawerLayout drawer = binding.drawerLayout;
-        NavigationView navigationView = binding.navView;
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-        mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow)
-                .setOpenableLayout(drawer)
-                .build();
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
-        NavigationUI.setupWithNavController(navigationView, navController);
+        if (VERSION.SDK_INT >= 21) {
+            Window window = getWindow();
+            window.addFlags(Integer.MIN_VALUE);
+//            window.setStatusBarColor(Color.parseColor("#EF5050"));
+        }
+        this.toolbar = initToolbar();
+        DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        this.drawer = drawerLayout;
+        ActionBarDrawerToggle actionBarDrawerToggle =
+                new ActionBarDrawerToggle(this, drawerLayout, this.toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        this.drawer.addDrawerListener(actionBarDrawerToggle);
+        this.drawer.addDrawerListener(new DrawerLayout.SimpleDrawerListener() {
+            public void onDrawerClosed(View view) {
+            }
+
+            public void onDrawerOpened(View view) {
+            }
+        });
+        actionBarDrawerToggle.syncState();
+        this.navigationView.setNavigationItemSelectedListener(this);
+        String str = "#ffffff";
+//        this.toolbar.setTitleTextColor(Color.parseColor(str));
+//        this.toolbar.getNavigationIcon().setColorFilter(Color.parseColor(str), Mode.MULTIPLY);
+        BottomNavigationView bottomNavigationView = (BottomNavigationView) findViewById(R.id.nav_view);
+        this.bottomNavigation = bottomNavigationView;
+
+        bottomNavigationView.setOnNavigationItemSelectedListener(this.navigationItemSelectedListener);
+        String str2 = "";
+
+//        MainActivity mainActivity = null;
+        openFragment(MainFragment.newInstance(str2 ,str2 ,this ));
+        ((AdView) findViewById(R.id.adView)).loadAd(new AdRequest.Builder().build());
+
+
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
+    public void openFragment(Fragment fragment) {
+        FragmentTransaction beginTransaction = getSupportFragmentManager().beginTransaction();
+        beginTransaction.replace(R.id.nav_host_fragment, fragment);
+        beginTransaction.addToBackStack(null);
+        beginTransaction.commit();
+    }
+
+    public void loadFragmentworkout(Fragment fragment) {
+        FragmentTransaction beginTransaction = getSupportFragmentManager().beginTransaction();
+        beginTransaction.replace(R.id.nav_host_fragment, fragment);
+        beginTransaction.addToBackStack(null);
+        beginTransaction.commit();
+        toolbar.setTitle("workout");
+        bottomNavigation.setSelectedItemId(R.id.navigation_map);
+    }
+
+    public void loadFragment_water(Fragment fragment) {
+        FragmentTransaction beginTransaction = getSupportFragmentManager().beginTransaction();
+        beginTransaction.replace(R.id.nav_host_fragment, fragment);
+        beginTransaction.addToBackStack(null);
+        beginTransaction.commit();
+        toolbar.setTitle("Walk & Step");
+        bottomNavigation.setSelectedItemId(R.id.navigation_walk);
+    }
+
+    private Toolbar initToolbar() {
+        Toolbar toolbar2 = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar2);
+
+
+        return toolbar2;
+    }
+
+    public boolean onNavigationItemSelected(MenuItem menuItem) {
+        int itemId = menuItem.getItemId();
+
+        String str = "android.intent.extra.TEXT";
+        String str2 = "android.intent.extra.SUBJECT";
+
+
+        if (itemId == R.id.nav_rateus) {
+            startActivity(new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("http://play.google.com/store/apps/details?id=" + getPackageName())));
+        } else if (itemId == R.id.nav_share) {
+
+            Intent intent2 = new Intent("android.intent.action.SEND");
+            intent2.setType("text/plain");
+            StringBuilder sb3 = new StringBuilder();
+            sb3.append("Best Free Health & Fitness app download now.\n Thnak You!\n  https://play.google.com/store/apps/details?id=" + getPackageName());
+            sb3.append(getApplicationContext().getPackageName());
+            String sb4 = sb3.toString();
+            intent2.putExtra(str2, "Share App");
+            intent2.putExtra(str, sb4);
+            startActivity(Intent.createChooser(intent2, "Share via"));
+        }else  if(itemId == R.id.nav_privacy)
+        {
+
+            Uri uri = Uri.parse("https://crazytrendsapp.blogspot.com/");
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            startActivity(intent);
+
+        }
+
+        this.drawer.closeDrawer((int) GravityCompat.START);
         return true;
     }
 
-    @Override
-    public boolean onSupportNavigateUp() {
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        return NavigationUI.navigateUp(navController, mAppBarConfiguration)
-                || super.onSupportNavigateUp();
+
+    public void onBackPressed() {
+        StepDetectionServiceHelper.stopAllIfNotRequired(this.getApplicationContext());
+//        StepDetectionServiceHelper.startAllIfEnabled(true, MainActivity.this);
+
+        final Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.adview_layout_exit);
+        ((GifImageView) dialog.findViewById(R.id.GifImageView)).setGifImageResource(R.drawable.rate);
+        ((Button) dialog.findViewById(R.id.btnno)).setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                dialog.dismiss();
+            }
+        });
+        ((Button) dialog.findViewById(R.id.btnrate)).setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                try {
+                    MainActivity mainActivity = MainActivity.this;
+                    mainActivity.startActivity(new Intent("android.intent.action.VIEW", Uri.parse("market://details?id=" + MainActivity.this.getPackageName())));
+                } catch (ActivityNotFoundException unused) {
+                    MainActivity mainActivity2 = MainActivity.this;
+                    mainActivity2.startActivity(new Intent("android.intent.action.VIEW", Uri.parse("https://play.google.com/store/apps/details?id=" + MainActivity.this.getPackageName())));
+                }
+            }
+        });
+        ((Button) dialog.findViewById(R.id.btnyes)).setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                dialog.dismiss();
+                MainActivity.this.finish();
+                System.exit(1);
+
+
+            }
+        });
+        dialog.show();
     }
 }
